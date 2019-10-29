@@ -1,0 +1,244 @@
+import dvtDecimal as dD
+
+
+__author__ = "david cobac"
+__date__ = 201910
+
+
+class suite(object):
+
+    def __init__(self,
+                 p_terme=None,
+                 rang_p_terme=0,
+                 fonction=None,
+                 rec=False):
+        self._rang_premier_terme = rang_p_terme
+        self.termes_connus = []
+        if p_terme is not None and rec:
+            self.set_premier_terme_rec(p_terme)
+        if fonction is not None:
+            self.set_fonction(fonction)
+        self._rec = rec
+
+    def set_premier_terme_rec(self, nombre):
+        if self._rang_premier_terme is not None:
+            # reinitialisation si besoin
+            self.termes_connus = []
+            self.termes_connus += [None] * (self._rang_premier_terme + 1)
+            if type(nombre) == tuple:
+                self.termes_connus[self._rang_premier_terme] =\
+                    dD.dvtDecimal(*nombre)
+            else:
+                self.termes_connus[self._rang_premier_terme] =\
+                    dD.dvtDecimal(nombre)
+
+    def set_rang_premier_terme(self, rang):
+        self._rang_premier_terme = rang
+
+    def set_fonction(self, fonction):
+        self._fonction = fonction
+
+    def __format_ecriture_dvtDecimal(objet_dvtDecimal, approx):
+        if objet_dvtDecimal.simpValues[1] == 1:
+            resultat = str(objet_dvtDecimal.simpValues[0])
+        else:
+            resultat = str(objet_dvtDecimal.simpValues[0]) +\
+                "/" + str(objet_dvtDecimal.simpValues[1])
+        if approx:
+            if objet_dvtDecimal.repPart == [0]:
+                ecriture = objet_dvtDecimal.intPart + \
+                    objet_dvtDecimal.irrPart()
+                ecriture = str(ecriture)
+            else:
+                ecriture = objet_dvtDecimal.dotWrite(15)
+            resultat += " " + ecriture
+        return resultat
+
+    def on_demand(self, n=None, approx=False):
+        rang = self._rang_premier_terme
+        ##
+        # 1er terme
+        if self.rec:
+            terme = self.termes_connus[self._rang_premier_terme]
+        else:
+            terme = self._fonction(rang)
+        #
+        yield suite.__format_ecriture_dvtDecimal(terme, approx)
+        #
+        j, b = 1, n is None
+        rang += 1
+        while b or j < n:
+            if not self.rec:
+                terme = self.fonction(rang)
+            else:
+                terme = self.fonction(terme)
+            yield suite.__format_ecriture_dvtDecimal(terme, approx)
+            rang += 1
+            j += 1
+
+    def get_terme_rang(self, rang):
+        resultat = None
+        # s'il existe, on le donne
+        if len(self.termes_connus) >= rang + 1 and\
+           self.termes_connus[rang] is not None:
+            resultat = self.termes_connus[rang]
+        elif rang >= self.rang_premier_terme:
+            if not self.rec:
+                # définition explicite
+                nb_termes_a_ajouter = rang - (len(self.termes_connus) - 1)
+                self.termes_connus += [None] * nb_termes_a_ajouter
+                resultat = self.fonction(rang)
+                self.termes_connus[rang] = resultat
+            else:
+                # définition par récurrence
+                # si on manque de termes
+                rang_actuel = len(self.termes_connus) - 1
+                while rang_actuel < rang:
+                    self.termes_connus += \
+                        [self.fonction(self.termes_connus[-1])]
+                    rang_actuel += 1
+                resultat = self.termes_connus[rang]
+        return resultat
+
+    def get_diff_succ(self):
+        resultat = None
+        if len(self.termes_connus) >= 2:
+            resultat = []
+            for i in range(len(self.termes_connus) - 1):
+                if self.termes_connus[i + 1] is not None and\
+                   self.termes_connus[i] is not None:
+                    resultat.append(self.termes_connus[i + 1]
+                                    - self.termes_connus[i])
+                else:
+                    resultat.append(None)
+        return resultat
+
+    def get_div_succ(self):
+        resultat = None
+        if len(self.termes_connus) >= 2 and \
+           0 not in self.termes_connus:
+            resultat = []
+            for i in range(len(self.termes_connus) - 1):
+                if self.termes_connus[i + 1] is not None and\
+                   self.termes_connus[i] is not None:
+                    resultat.append(self.termes_connus[i + 1]
+                                    / self.termes_connus[i])
+                else:
+                    resultat.append(None)
+        return resultat
+
+    def get_somme_premiers(self, n):
+        # on s'assure de tout avoir
+        if not self.rec:
+            for i in range(self.rang_premier_terme, n +
+                           self.rang_premier_terme):
+                self.get_terme_rang(i)
+        else:
+            self.get_terme_rang(self.rang_premier_terme + n - 1)
+        # on somme
+        return sum(self.termes_connus[self.rang_premier_terme:
+                                      self.rang_premier_terme + n])
+
+    def get_listes_representation(self, n):
+        resultat = None
+        if not self.rec:
+            for i in range(self.rang_premier_terme,
+                           self.rang_premier_terme + n):
+                self.get_terme_rang(i)
+            resultat = (range(n), self.termes_connus[:n + 1])
+        else:
+            self.get_terme_rang(n)
+            resultatX = []
+            resultatY = []
+            for i in range(n-1):
+                resultatX += [self.termes_connus[i]]
+                resultatY += [0]
+                resultatX += [self.termes_connus[i]]
+                resultatY += [self.termes_connus[i+1]]
+                resultatX += [self.termes_connus[i+1]]
+                resultatY += [self.termes_connus[i+1]]
+            i = n - 1
+            resultatX += [self.termes_connus[i]]
+            resultatY += [0]
+            resultatX += [self.termes_connus[i]]
+            resultatY += [self.termes_connus[i]]
+            resultat = (resultatX, resultatY)
+        return resultat
+
+    # def semble_arithmetique(self):
+    #     resultat = None
+    #     if None not in self.termes_connus and \
+    #        len(self.termes_connus) >= 2:
+    #         resultat = len(set(self.get_diff_succ())) == 1
+    #     return resultat
+
+    # def semble_geometrique(self):
+    #     resultat = None
+    #     if None not in self.termes_connus and \
+    #        len(self.termes_connus) >= 2:
+    #         if self.get_div_succ() is not None:
+    #             resultat = len(set(self.get_div_succ())) == 1
+    #     return resultat
+
+if __name__ == "__main__":
+    v = suite((1, 110), fonction=lambda x:5*x-dD.dvtDecimal(2, 3),
+              rec=True)
+    for i in v.get_sod(10, approx=True):
+        print(i)
+    #
+    f = lambda x: x * 5
+    a = suite(.5, 1, f, True)
+    a.get_terme_rang(1)
+    a.get_terme_rang(8)
+    print(a.termes_connus)
+    print(a.get_diff_succ())
+    print(a.get_div_succ())
+    print(a.get_somme_premiers(3))
+    # print(a.termes_connus)
+    # print(a.semble_arithmetique())
+    # print(a.semble_geometrique())
+    #
+    # import matplotlib.pyplot as plt
+    # plt.rc('text', usetex=True)
+    # listes = a.get_listes_representation_rec(5)
+    # l, m = listes
+    # N = 200
+    # debut = 0
+    # fin = 1
+    # x = debut
+    # X = []
+    # Y = []
+    # for i in range(N + 1):
+    #     X += [x]
+    #     Y += [fonction(x)]
+    #     x += (fin - debut) / N
+    # plt.plot(X, Y, color="red")
+    # for i in range(0, len(l), 3):
+    #     plt.plot(l[i:i+3], m[i:i+3],
+    #              color="blue",
+    #              linewidth=1,
+    #              dashes=(3, 1))
+    #     etiq = r'$u_{' + str(i//3) + r'}$'
+    #     plt.text(l[i], -.05,
+    #              ha='center',
+    #              fontsize=15,
+    #              color="blue",
+    #              s=etiq)
+    # ax = plt.gca()
+    # ax.spines['bottom'].set_position('zero')
+    # ax.spines['left'].set_position('zero')
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
+    # print(len(l))
+    # plt.plot([0, 1], [0, 1], color="black")
+    # plt.show()
+    # #
+    b = suite(3, fonction=lambda x: 3 ** x)
+    b.get_terme_rang(2)
+    b.get_terme_rang(10)
+    print(b.termes_connus)
+    print(b.get_somme_premiers(30))
+    print(b.termes_connus)
+    print(b.get_div_succ())
+    # print(b.semble_arithmetique())
+    # print(b.semble_geometrique()) 

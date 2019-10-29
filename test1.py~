@@ -1,0 +1,18 @@
+import suite as st
+import dvtDecimal as dD
+
+u = st.suite((1, 110),
+             fonction=lambda x: 5*x-dD.dvtDecimal(2, 3),
+             rec=True)
+for i in u.on_demand(10, approx=True):
+    print(i, eval(i[0]))
+    #
+
+f = lambda x: x * 5
+v = st.suite(.5, 1, f, False)
+v.get_terme_rang(1)
+v.get_terme_rang(8)
+print(v.termes_connus)
+print(v.get_diff_succ())
+print(v.get_div_succ())
+print(v.get_somme_premiers(3))
