@@ -23,6 +23,7 @@ for S in u:
     S.get_terme_rang(1)
     S.get_terme_rang(8)
     print(S.termes_connus)
+    S.play()
     # print(S.get_diff_succ())
     # print(S.get_div_succ())
     # print(S.get_somme_premiers(3))
@@ -58,5 +59,5 @@ for S in u:
     ax.spines['left'].set_position('zero')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    #plt.show()
 
+plt.show()

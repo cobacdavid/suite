@@ -77,22 +77,27 @@ class suite(object):
             j += 1
 
     def play(self, n=10):
+        # ligne suivante à changer avec un vérificateur
+        # de présence de package en excluant try/except
         from midiutil import MIDIFile
         degrees = [60, 62, 64, 65, 67, 69, 71, 72]
         track = 0
         channel = 0
-        time = 0   # In beats
-        duration = 1  # In beats
-        tempo = 160  # In BPM
-        volume = 100 # 0-127, as per the MIDI standard
+        time = 0
+        duration = 1
+        tempo = 120
+        volume = 100
         morceau = MIDIFile(1)
         morceau.addTempo(track, time, tempo)
         #
-        for i, terme in enumerate(self.on_demand(n)):
-            note = terme % len(degrees)
-            morceau.addNote(track, channel, note, time + i, duration, volume)
+        for i in range(n):
+            j = i + self._rang_premier_terme
+            terme = self.get_terme_rang(j)
+            note = degrees[int(float(terme)) % len(degrees)]
+            morceau.addNote(track, channel, note, time, duration, volume)
+            time += 1
         #
-        with open("temp.mid", "w") as sortie:
+        with open("temp.mid", "wb") as sortie:
             morceau.writeFile(sortie)
 
     def get_terme_rang(self, rang):
