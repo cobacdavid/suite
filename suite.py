@@ -97,6 +97,9 @@ class suite(object):
             morceau.addNote(track, channel, note, time, duration, volume)
             time += 1
         #
+        # à modifier si le fichier existe déjà
+        # numérotation ou nom à spécifier en variable
+        # optionnelle
         with open("temp.mid", "wb") as sortie:
             morceau.writeFile(sortie)
 
